@@ -26,3 +26,14 @@ main = hspec $ do
 
 		it "objects to loading an invalid BoardSquare" $ do
 			(fromFEN "x9" :: Maybe BoardSquare) `shouldBe` Nothing
+
+		it "loads a side" $ do
+			(fromFEN "w" :: Maybe Side) `shouldBe` Just White
+
+		it "loads lacking EnPassant" $ do
+			(fromFEN "-" :: Maybe EnPassant) `shouldBe` Just (EnPassant Nothing)
+
+		it "loads a side's EnPassant" $ do
+			let
+				str = "e5"
+				in (fromFEN str :: Maybe EnPassant) `shouldBe` Just (EnPassant (fromFEN str :: Maybe BoardSquare))

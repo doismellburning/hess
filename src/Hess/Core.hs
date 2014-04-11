@@ -8,7 +8,7 @@ data GameState = GameState Board Side CastlingState EnPassant Int Int
 
 data Board = Array BoardSquare (Maybe Piece)
 
-data Side = Black | White deriving (Enum)
+data Side = Black | White deriving (Enum, Eq, Show)
 
 data CastlingState = CastlingState -- TODO
 
@@ -21,7 +21,7 @@ data Piece = Piece PieceType Side
 
 data PieceType = Pawn deriving (Enum)
 
-data EnPassant = EnPassant (Maybe BoardSquare)
+data EnPassant = EnPassant (Maybe BoardSquare) deriving (Show, Eq)
 
 data Move = Move BoardSquare BoardSquare
 
@@ -48,7 +48,8 @@ instance FENable BoardSquare where
 
 instance FENable EnPassant where
 	toFEN (EnPassant s) = maybe "-" toFEN s
-	fromFEN = undefined
+	fromFEN "-" = Just $ EnPassant Nothing
+	fromFEN s = fmap (EnPassant . Just) (fromFEN s :: Maybe BoardSquare)
 
 instance FENable GameState where
 	toFEN (GameState board active castling enPassant halfMove fullMove) =
@@ -60,8 +61,11 @@ instance FENable CastlingState where
 	fromFEN = undefined
 
 instance FENable Side where
-	toFEN = undefined
-	fromFEN = undefined
+	toFEN Black = "b"
+	toFEN White = "w"
+	fromFEN "w" = Just White
+	fromFEN "b" = Just Black
+	fromFEN _ = Nothing
 
 instance FENable Int where
 	toFEN i = [intToDigit i]
