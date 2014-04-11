@@ -18,3 +18,11 @@ main = hspec $ do
 
 		it "starts in the right state" $ do
 			(toFEN newGame) `shouldBe` startingFEN
+
+		it "is happy loading a valid BoardSquare" $ do
+			let
+				bs = fromFEN "e5" :: Maybe BoardSquare
+				in (maybe "" toFEN bs) `shouldBe` "e5"
+
+		it "objects to loading an invalid BoardSquare" $ do
+			(fromFEN "x9" :: Maybe BoardSquare) `shouldBe` Nothing
