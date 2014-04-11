@@ -33,16 +33,22 @@ class FENable a where
 
 instance FENable File where
 	toFEN (File f) = [f]
-	fromFEN = undefined
+	fromFEN (f:[])
+		| 'a' <= f && f <= 'h' = Just $ File f
+		| otherwise = Nothing
+	fromFEN _ = Nothing
 
 instance FENable Rank where
 	toFEN (Rank r) = show r
-	fromFEN = undefined
+	fromFEN (r:[])
+		| '1' <= r && r <= '8' = Just $ Rank $ digitToInt r
+		| otherwise = Nothing
+	fromFEN _ = Nothing
 
 instance FENable BoardSquare where
 	toFEN (BoardSquare f r) = (toFEN f) ++ (toFEN r)
 	fromFEN (f:r:[])
-		| 'a' <= f && f <= 'h' && '1' <= r && r <= '8' = Just $ BoardSquare (File f) (Rank $ digitToInt r) -- TODO
+		| isJust (fromFEN [f] :: Maybe File) && isJust (fromFEN [r] :: Maybe Rank) = Just $ BoardSquare (File f) (Rank $ digitToInt r) -- TODO
 		| otherwise = Nothing
 	fromFEN _ = Nothing
 
