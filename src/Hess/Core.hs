@@ -1,25 +1,26 @@
 module Hess.Core where
 
---import Data.Array
+import Data.Array
 import Data.Char
+import Data.List
 import Data.Maybe
 
 data GameState = GameState Board Side CastlingState EnPassant Int Int
 
-data Board = Array BoardSquare (Maybe Piece)
+data Board = Board (Array BoardSquare (Maybe Piece))
 
 data Side = Black | White deriving (Enum, Eq, Show)
 
 data CastlingState = CastlingState Bool Bool Bool Bool deriving (Eq, Show)
 
-data BoardSquare = BoardSquare File Rank deriving (Show, Eq)
+data BoardSquare = BoardSquare File Rank deriving (Eq, Ix, Ord, Show)
 
-newtype File = File Char deriving (Show, Eq)
-newtype Rank = Rank Int deriving (Show, Eq)
+newtype File = File Char deriving (Eq, Ix, Ord, Show)
+newtype Rank = Rank Int deriving (Eq, Ix, Ord, Show)
 
-data Piece = Piece PieceType Side
+data Piece = Piece PieceType Side deriving (Eq, Show)
 
-data PieceType = Pawn deriving (Enum)
+data PieceType = Pawn deriving (Enum, Eq, Show)
 
 data EnPassant = EnPassant (Maybe BoardSquare) deriving (Show, Eq)
 
@@ -88,8 +89,49 @@ instance FENable Int where
     fromFEN _ = Nothing
 
 -- Hack :(
+sideToFEN :: Side -> Char -> Char
+sideToFEN White = toUpper
+sideToFEN Black = toLower
+sideFromFEN :: Char -> Side
+sideFromFEN c = if' (isUpper c) White Black
+
+instance FENable Piece where
+    toFEN (Piece t s) = map (sideToFEN s) (toFEN t)
+    fromFEN = undefined
+
+-- Bodge
+instance FENable PieceType where
+    toFEN Pawn = "p"
+    fromFEN = undefined
+
+chunkList :: Eq a => Int -> [a] -> [[a]]
+chunkList size list =
+    let
+        (pre, post) = splitAt size list
+    in if' (post == []) [pre] ([pre] ++ (chunkList size post))
+
+-- Hack :(
 boardToFEN :: Board -> String
-boardToFEN = undefined
+
+rowToFEN :: [Maybe String] -> String
+-- rowToFEN {...p..P.} == "3p2P1"
+-- rowToFEN {........} == "8"
+-- rowToFEN {pppppppp} == "pppppppp"
+rowToFEN = snd . rowToFEN' (0, "")
+rowToFEN' :: (Int, String) -> [Maybe String] -> (Int, String)
+rowToFEN' (0, s) [] = (0, s)
+rowToFEN' (i, s) [] = (0, s ++ (show i))
+rowToFEN' (i, s) (Nothing:xs) = rowToFEN' (i+1, s) xs
+rowToFEN' (0, s) ((Just a):xs) = rowToFEN' (0, s++a) xs
+rowToFEN' (i, s) ((Just a):xs) = rowToFEN' (0, s ++ (show i) ++ a) xs
+
+boardToFEN (Board board) =
+    let
+        rows = chunkList 8 $ elems board :: [[Maybe Piece]] -- so now we have a 2D structure
+        fenSquares = map (map (fmap toFEN)) rows :: [[Maybe String]] -- and now the elements have maybe been FENified
+        joinRows = intercalate "," :: [String] -> String
+    in joinRows $ map rowToFEN fenSquares
+
 boardFromFEN :: String -> Maybe Board
 boardFromFEN = undefined
 
