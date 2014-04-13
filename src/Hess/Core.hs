@@ -112,13 +112,22 @@ sideFromFEN c = if' (isUpper c) White Black
 
 instance FENable Piece where
     toFEN (Piece t s) = [(sideToFEN s) (fenChar t)]
-    fromFEN = undefined
+    fromFEN (c:[]) =
+        let
+            side = sideFromFEN c
+            c' = toLower c
+            pt = charToPieceType c'
+        in maybe Nothing (\t -> Just $ Piece t side) pt
+    fromFEN _ = Nothing
 
 fenChar :: PieceType -> Char
 -- Always lower-case
 -- We're not using FENable because it's not strictly true because of dual
 -- representation
 fenChar Pawn = 'p'
+charToPieceType c
+    | c == 'p' = Just Pawn
+    | otherwise = Nothing
 
 chunkList :: Eq a => Int -> [a] -> [[a]]
 chunkList size list =
