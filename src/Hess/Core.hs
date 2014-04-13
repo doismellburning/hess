@@ -61,7 +61,22 @@ instance FENable EnPassant where
 instance FENable GameState where
     toFEN (GameState board active castling enPassant halfMove fullMove) =
         (boardToFEN board) ++ " " ++ (toFEN active) ++ " " ++ (toFEN castling) ++ " " ++ (toFEN enPassant) ++ " " ++ (toFEN halfMove) ++ " " ++ (toFEN fullMove)
-    fromFEN = undefined
+    fromFEN s =
+        let
+            ws = words s
+            board = (ws `lindex` 0) >>= boardFromFEN
+            active = (ws `lindex` 1) >>= fromFEN :: Maybe Side
+            castling = (ws `lindex` 2) >>= fromFEN :: Maybe CastlingState
+            enPassant = (ws `lindex` 3) >>= fromFEN :: Maybe EnPassant
+            halfMove = (ws `lindex` 3) >>= fromFEN :: Maybe Int
+            fullMove = (ws `lindex` 4) >>= fromFEN :: Maybe Int
+            allJust = and [isJust board, isJust active, isJust castling, isJust enPassant, isJust halfMove, isJust fullMove] -- Grim but yay totality!
+        in if' allJust (Just $ GameState (fromJust board) (fromJust active) (fromJust castling) (fromJust enPassant) (fromJust halfMove) (fromJust fullMove)) Nothing
+
+lindex :: [a] -> Int -> Maybe a
+lindex xs i
+    | i < length xs = Just $ xs !! i
+    | otherwise = Nothing
 
 if' :: Bool -> a -> a -> a
 if' True x _ = x
