@@ -52,3 +52,8 @@ main = hspec $ do
 			let
 				cs = CastlingState False True False True
 				in (toFEN cs) `shouldBe` "Qq"
+
+		it "reads and writes the same FEN for CastlingState" $ do
+			let
+				cs = CastlingState False True True False
+				in (fromFEN $ toFEN cs) `shouldBe` Just cs

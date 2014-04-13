@@ -10,7 +10,7 @@ data Board = Array BoardSquare (Maybe Piece)
 
 data Side = Black | White deriving (Enum, Eq, Show)
 
-data CastlingState = CastlingState Bool Bool Bool Bool
+data CastlingState = CastlingState Bool Bool Bool Bool deriving (Eq, Show)
 
 data BoardSquare = BoardSquare File Rank deriving (Show, Eq)
 
@@ -71,7 +71,9 @@ instance FENable CastlingState where
         let
             handleEmpty x = if' (x == "") "-" x
         in handleEmpty $ concat $ [(if' wk "K" ""), (if' wq "Q" ""), (if' bk "k" ""), (if' bq "q" "")]
-    fromFEN = undefined
+    fromFEN s
+        | s == "-" = Just $ CastlingState False False False False
+        | otherwise = Just $ CastlingState ('K' `elem` s) ('Q' `elem` s) ('k' `elem` s) ('q' `elem` s) -- TODO Too permissive
 
 instance FENable Side where
 	toFEN Black = "b"
