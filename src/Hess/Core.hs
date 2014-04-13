@@ -10,7 +10,7 @@ data Board = Array BoardSquare (Maybe Piece)
 
 data Side = Black | White deriving (Enum, Eq, Show)
 
-data CastlingState = CastlingState -- TODO
+data CastlingState = CastlingState Bool Bool Bool Bool
 
 data BoardSquare = BoardSquare File Rank deriving (Show, Eq)
 
@@ -62,9 +62,16 @@ instance FENable GameState where
 		(boardToFEN board) ++ " " ++ (toFEN active) ++ " " ++ (toFEN castling) ++ " " ++ (toFEN enPassant) ++ " " ++ (toFEN halfMove) ++ " " ++ (toFEN fullMove)
 	fromFEN = undefined
 
+if' :: Bool -> a -> a -> a
+if' True x _ = x
+if' False _ y = y
+
 instance FENable CastlingState where
-	toFEN = undefined
-	fromFEN = undefined
+    toFEN (CastlingState wk wq bk bq) =
+        let
+            handleEmpty x = if' (x == "") "-" x
+        in handleEmpty $ concat $ [(if' wk "K" ""), (if' wq "Q" ""), (if' bk "k" ""), (if' bq "q" "")]
+    fromFEN = undefined
 
 instance FENable Side where
 	toFEN Black = "b"

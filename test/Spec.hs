@@ -37,3 +37,18 @@ main = hspec $ do
 			let
 				str = "e5"
 				in (fromFEN str :: Maybe EnPassant) `shouldBe` Just (EnPassant (fromFEN str :: Maybe BoardSquare))
+
+		it "generates proper FEN for initial CastlingState" $ do
+			let
+				cs = CastlingState True True True True
+				in (toFEN cs) `shouldBe` "KQkq"
+
+		it "generates proper FEN when no-one can castle" $ do
+			let
+				cs = CastlingState False False False False
+				in (toFEN cs) `shouldBe` "-"
+
+		it "generates proper FEN for some given CastlingState" $ do
+			let
+				cs = CastlingState False True False True
+				in (toFEN cs) `shouldBe` "Qq"
