@@ -48,7 +48,7 @@ instance FENable Rank where
 instance FENable BoardSquare where
 	toFEN (BoardSquare f r) = (toFEN f) ++ (toFEN r)
 	fromFEN (f:r:[])
-		| isJust (fromFEN [f] :: Maybe File) && isJust (fromFEN [r] :: Maybe Rank) = Just $ BoardSquare (File f) (Rank $ digitToInt r) -- TODO
+		| isJust (fromFEN [f] :: Maybe File) && isJust (fromFEN [r] :: Maybe Rank) = Just $ BoardSquare (File f) (Rank $ digitToInt r)
 		| otherwise = Nothing
 	fromFEN _ = Nothing
 
