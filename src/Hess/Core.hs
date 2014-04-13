@@ -96,13 +96,14 @@ sideFromFEN :: Char -> Side
 sideFromFEN c = if' (isUpper c) White Black
 
 instance FENable Piece where
-    toFEN (Piece t s) = map (sideToFEN s) (toFEN t)
+    toFEN (Piece t s) = [(sideToFEN s) (fenChar t)]
     fromFEN = undefined
 
--- Bodge
-instance FENable PieceType where
-    toFEN Pawn = "p"
-    fromFEN = undefined
+fenChar :: PieceType -> Char
+-- Always lower-case
+-- We're not using FENable because it's not strictly true because of dual
+-- representation
+fenChar Pawn = 'p'
 
 chunkList :: Eq a => Int -> [a] -> [[a]]
 chunkList size list =
