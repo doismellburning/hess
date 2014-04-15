@@ -11,15 +11,15 @@ checkFEN = "rnbqkbnr/8/8/1B6/8/8/8/RNBQK1NR b KQkq - 1 1"
 main :: IO ()
 main = hspec $ do
     describe "Hess" $ do
+        it "writes out a starting game correctly" $ do
+            (toFEN newGame) `shouldBe` startingFEN
+
         it "writes the FEN it reads" $ do
             let
                 fens = [startingFEN, pawnlessFEN, simpleRookFEN, simpleBishopFEN, checkFEN]
                 states = map fromFEN fens :: [Maybe GameState]
                 readwritten = map (fmap toFEN) states :: [Maybe String]
                 in (map (fromMaybe ":(") readwritten) `shouldBe` fens
-
-        it "starts in the right state" $ do
-            (toFEN newGame) `shouldBe` startingFEN
 
         it "is happy loading a valid BoardSquare" $ do
             let
