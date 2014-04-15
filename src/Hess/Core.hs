@@ -111,7 +111,7 @@ instance FENable Side where
 
 instance FENable Int where
     toFEN i = [intToDigit i]
-    fromFEN (s:[]) = Just $ digitToInt s
+    fromFEN (c:[]) = if' (isDigit c) (Just $ digitToInt c) Nothing
     fromFEN _ = Nothing
 
 -- Hack :(
