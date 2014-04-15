@@ -175,7 +175,7 @@ boardToFEN (Board board) =
     let
         rows = chunkList 8 $ elems board :: [[Maybe Piece]] -- so now we have a 2D structure
         fenSquares = map (map (fmap toFEN)) rows :: [[Maybe String]] -- and now the elements have maybe been FENified
-        joinRows = intercalate "," :: [String] -> String
+        joinRows = intercalate "/" :: [String] -> String
     in joinRows $ map rowToFEN fenSquares
 
 rowFromFEN :: String -> Maybe [Maybe Piece]
