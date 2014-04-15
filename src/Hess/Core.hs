@@ -79,8 +79,8 @@ instance FENable GameState where
             active = (ws `lindex` 1) >>= fromFEN :: Maybe Side
             castling = (ws `lindex` 2) >>= fromFEN :: Maybe CastlingState
             enPassant = (ws `lindex` 3) >>= fromFEN :: Maybe EnPassant
-            halfMove = (ws `lindex` 3) >>= fromFEN :: Maybe Int
-            fullMove = (ws `lindex` 4) >>= fromFEN :: Maybe Int
+            halfMove = (ws `lindex` 4) >>= fromFEN :: Maybe Int
+            fullMove = (ws `lindex` 5) >>= fromFEN :: Maybe Int
             allJust = and [isJust board, isJust active, isJust castling, isJust enPassant, isJust halfMove, isJust fullMove] -- Grim but yay totality!
         in if' allJust (Just $ GameState (fromJust board) (fromJust active) (fromJust castling) (fromJust enPassant) (fromJust halfMove) (fromJust fullMove)) Nothing
 
