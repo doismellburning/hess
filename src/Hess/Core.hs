@@ -7,9 +7,9 @@ import Data.List
 import Data.Maybe
 import Data.String.Utils
 
-data GameState = GameState Board Side CastlingState EnPassant Int Int
+data GameState = GameState Board Side CastlingState EnPassant Int Int deriving (Eq, Show)
 
-data Board = Board (Array BoardSquare (Maybe Piece))
+data Board = Board (Array BoardSquare (Maybe Piece)) deriving (Eq, Show)
 
 data Side = Black | White deriving (Enum, Eq, Show)
 
