@@ -1,9 +1,11 @@
 module Hess.Core where
 
+import Control.Monad
 import Data.Array
 import Data.Char
 import Data.List
 import Data.Maybe
+import Data.String.Utils
 
 data GameState = GameState Board Side CastlingState EnPassant Int Int
 
@@ -20,7 +22,13 @@ newtype Rank = Rank Int deriving (Eq, Ix, Ord, Show)
 
 data Piece = Piece PieceType Side deriving (Eq, Show)
 
-data PieceType = Pawn deriving (Enum, Eq, Show)
+data PieceType = Pawn
+    | Rook
+    | Knight
+    | Bishop
+    | Queen
+    | King
+    deriving (Enum, Eq, Show)
 
 data EnPassant = EnPassant (Maybe BoardSquare) deriving (Show, Eq)
 
@@ -52,6 +60,9 @@ instance FENable BoardSquare where
         | isJust (fromFEN [f] :: Maybe File) && isJust (fromFEN [r] :: Maybe Rank) = Just $ BoardSquare (File f) (Rank $ digitToInt r)
         | otherwise = Nothing
     fromFEN _ = Nothing
+
+boardSquare' :: String -> BoardSquare -- Unsafe utility function
+boardSquare' = fromJust . fromFEN
 
 instance FENable EnPassant where
     toFEN (EnPassant s) = maybe "-" toFEN s
@@ -125,8 +136,18 @@ fenChar :: PieceType -> Char
 -- We're not using FENable because it's not strictly true because of dual
 -- representation
 fenChar Pawn = 'p'
+fenChar Rook = 'r'
+fenChar Knight = 'n'
+fenChar Bishop = 'b'
+fenChar Queen = 'q'
+fenChar King = 'k'
 charToPieceType c
     | c == 'p' = Just Pawn
+    | c == 'r' = Just Rook
+    | c == 'n' = Just Knight
+    | c == 'b' = Just Bishop
+    | c == 'q' = Just Queen
+    | c == 'k' = Just King
     | otherwise = Nothing
 
 chunkList :: Eq a => Int -> [a] -> [[a]]
@@ -157,8 +178,26 @@ boardToFEN (Board board) =
         joinRows = intercalate "," :: [String] -> String
     in joinRows $ map rowToFEN fenSquares
 
+rowFromFEN :: String -> Maybe [Maybe Piece]
+rowFromFEN s = -- Totally a way of making this nicer...
+    let ss = map rowFromFEN' s :: [Maybe [Maybe Piece]]
+    -- And now, if any elements of ss are Nothing, we return Nothing,
+    -- otherwise we want Just a concatenated list of internals...
+    -- in foldl (\x y -> maybe Nothing (\z -> Just $ x ++ z) y) (Just []) ss
+    in foldM (\x y -> maybe Nothing (\z -> Just $ x ++ z) y) [] ss
+
+rowFromFEN' :: Char -> Maybe [Maybe Piece]
+rowFromFEN' c
+    | isDigit c = Just $ replicate (digitToInt c) Nothing
+    | otherwise = (fromFEN [c]) >>= (\x -> Just [Just x]) -- Probably could be nicer with Monoid stuff or sth
+
 boardFromFEN :: String -> Maybe Board
-boardFromFEN = undefined
+boardFromFEN s =
+    let
+        rows = split "/" s
+        rows' = map rowFromFEN rows :: [Maybe [Maybe Piece]]
+        joined = fmap concat $ sequence rows' :: Maybe [Maybe Piece]
+    in fmap (Board . listArray ((boardSquare' "a1"), (boardSquare' "h8"))) joined
 
 isPromotionMove :: GameState -> Move -> Bool
 isPromotionMove = undefined
