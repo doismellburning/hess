@@ -41,3 +41,14 @@ test-suite spec
         , MissingH
         , HUnit
         , hspec
+
+test-suite doctests
+    type:
+        exitcode-stdio-1.0
+    ghc-options:
+        -threaded
+    main-is:
+        test/Doctests.hs
+    build-depends:
+        base
+        , doctest >= 0.8
