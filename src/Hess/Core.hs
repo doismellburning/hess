@@ -213,12 +213,10 @@ boardFromFEN s =
     in fmap (Board . listArray ((boardSquare' "a1"), (boardSquare' "h8"))) joined
 
 isPromotionMove :: GameState -> Move -> Bool
-isPromotionMove = undefined
-{-
 isPromotionMove gameState move =
-    let piece = gameState `pieceAtSquare` (moveStart move)
-    in undefined
--}
+    let piece = fromJust $ gameState `pieceAtSquare` (moveStart move)
+        endRank = rank $ moveEnd move
+    in pieceType piece == Pawn && (pieceSide piece == Black && endRank == Rank 1 || pieceSide piece == White && endRank == Rank 8)
 
 validateMove :: GameState -> Move -> Maybe MoveError
 validateMove = undefined
