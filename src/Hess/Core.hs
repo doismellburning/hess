@@ -232,4 +232,13 @@ startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 newGame :: GameState
 newGame = fromJust $ fromFEN startingFEN
 
-
+stalemate :: GameState -> Bool
+-- ^Are we in stalemate, i.e. not in check but unable to move
+--
+-- >>> stalemate newGame
+-- False
+--
+-- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1"
+-- >>> stalemate g
+-- True
+stalemate = undefined
