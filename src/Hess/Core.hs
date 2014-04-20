@@ -7,7 +7,14 @@ import Data.List
 import Data.Maybe
 import Data.String.Utils
 
-data GameState = GameState Board Side CastlingState EnPassant Int Int deriving (Eq, Show)
+data GameState = GameState {
+    gameBoard :: Board,
+    gameSide :: Side,
+    gameCastlingState :: CastlingState,
+    gameEnPassanti :: EnPassant,
+    gameHalfMove :: Int,
+    gameFullMove :: Int
+} deriving (Eq, Show)
 
 data Board = Board (Array BoardSquare (Maybe Piece)) deriving (Eq, Show)
 
