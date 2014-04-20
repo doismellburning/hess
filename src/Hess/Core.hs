@@ -22,12 +22,18 @@ data Side = Black | White deriving (Enum, Eq, Show)
 
 data CastlingState = CastlingState Bool Bool Bool Bool deriving (Eq, Show)
 
-data BoardSquare = BoardSquare File Rank deriving (Eq, Ix, Ord, Show)
+data BoardSquare = BoardSquare {
+    file :: File,
+    rank :: Rank
+} deriving (Eq, Ix, Ord, Show)
 
 newtype File = File Char deriving (Eq, Ix, Ord, Show)
 newtype Rank = Rank Int deriving (Eq, Ix, Ord, Show)
 
-data Piece = Piece PieceType Side deriving (Eq, Show)
+data Piece = Piece {
+    pieceType :: PieceType,
+    pieceSide :: Side
+} deriving (Eq, Show)
 
 data PieceType = Pawn
     | Rook
