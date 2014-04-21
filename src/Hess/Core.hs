@@ -213,9 +213,9 @@ boardFromFEN s =
     in fmap (Board . listArray ((boardSquare' "a1"), (boardSquare' "h8"))) joined
 
 isPromotionMove :: GameState -> Move -> Bool
-isPromotionMove gameState move =
-    let piece = fromJust $ gameState `pieceAtSquare` (moveStart move)
-        endRank = rank $ moveEnd move
+isPromotionMove gameState move' =
+    let piece = fromJust $ gameState `pieceAtSquare` (moveStart move')
+        endRank = rank $ moveEnd move'
     in pieceType piece == Pawn && (pieceSide piece == Black && endRank == Rank 1 || pieceSide piece == White && endRank == Rank 8)
 
 validateMove :: GameState -> Move -> Maybe MoveError
@@ -246,3 +246,14 @@ stalemate = not . canMove
 canMove :: GameState -> Bool
 -- ^Can the current side make a valid move
 canMove = undefined
+
+move :: GameState -> BoardSquare -> BoardSquare -> Either MoveError GameState
+-- ^Applies a move to a GameState if it's valid (returning a Right
+-- GameState) or a Left MoveErrror if it's not a valid move
+--
+-- >>> let g = newGame
+-- >>> toFEN g
+-- "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+-- >>> toFEN $ move g (boardSquare' "a2") (boardSquare' "a4")
+-- "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
+move = undefined
