@@ -9,7 +9,7 @@ import Data.String.Utils
 
 data GameState = GameState {
     gameBoard :: Board,
-    gameSide :: Side,
+    gameActiveSide :: Side,
     gameCastlingState :: CastlingState,
     gameEnPassanti :: EnPassant,
     gameHalfMove :: Int,
