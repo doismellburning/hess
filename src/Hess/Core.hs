@@ -241,4 +241,8 @@ stalemate :: GameState -> Bool
 -- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1"
 -- >>> stalemate g
 -- True
-stalemate = undefined
+stalemate = not canMove
+
+canMove :: GameState -> Bool
+-- ^Can the current side make a valid move
+canMove = undefined
