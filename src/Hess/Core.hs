@@ -222,7 +222,18 @@ validateMove :: GameState -> Move -> Maybe MoveError
 validateMove = undefined
 
 pieceAtSquare :: GameState -> BoardSquare -> Maybe Piece
-pieceAtSquare = undefined
+-- ^
+--
+-- >>> let pieceAtSquare' g b = pieceAtSquare g (boardSquare' b)
+-- >>> fmap toFEN $ pieceAtSquare' newGame "a1"
+-- Just "r"
+-- >>> pieceAtSquare' newGame "d5"
+-- Nothing
+-- >>> fmap toFEN $ pieceAtSquare' newGame "h8"
+-- Just "R"
+pieceAtSquare g square =
+    let Board board = gameBoard g
+        in board ! square
 
 moveStart (Move s _) = s
 moveEnd (Move _ e) = e
