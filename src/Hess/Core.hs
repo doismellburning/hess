@@ -283,5 +283,5 @@ activePieces g =
         isPieceAndActive Nothing = False
         isPieceAndActive (Just (Piece _ s)) = s == activeSide
         f' = filter (isPieceAndActive . snd) b' :: [(BoardSquare, Maybe Piece)]
-        h = map (\(x, y) -> (x, fromJust y)) f'
+        h = map (\(x, y) -> (x, fromJust y)) f' -- This is grim, BUT because `isPieceAndActive Nothing = False` it works. TODO Refactor the last few to use `catMaybes` or similar for niceness
     in h
