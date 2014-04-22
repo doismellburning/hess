@@ -222,7 +222,18 @@ validateMove :: GameState -> Move -> Maybe MoveError
 validateMove = undefined
 
 pieceAtSquare :: GameState -> BoardSquare -> Maybe Piece
-pieceAtSquare = undefined
+-- ^
+--
+-- >>> let pieceAtSquare' g b = pieceAtSquare g (boardSquare' b)
+-- >>> fmap toFEN $ pieceAtSquare' newGame "a1"
+-- Just "r"
+-- >>> pieceAtSquare' newGame "d5"
+-- Nothing
+-- >>> fmap toFEN $ pieceAtSquare' newGame "h8"
+-- Just "R"
+pieceAtSquare g square =
+    let Board board = gameBoard g
+        in board ! square
 
 moveStart (Move s _) = s
 moveEnd (Move _ e) = e
@@ -235,12 +246,12 @@ newGame = fromJust $ fromFEN startingFEN
 stalemate :: GameState -> Bool
 -- ^Are we in stalemate, i.e. not in check but unable to move
 --
--- >>> stalemate newGame
--- False
+-- -- >>> stalemate newGame
+-- -- False
 --
--- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1"
--- >>> stalemate g
--- True
+-- -- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1"
+-- -- >>> stalemate g
+-- -- True
 stalemate = not . canMove
 
 canMove :: GameState -> Bool
@@ -257,3 +268,31 @@ move :: GameState -> BoardSquare -> BoardSquare -> Either MoveError GameState
 -- >>> toFEN $ move g (boardSquare' "a2") (boardSquare' "a4")
 -- "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
 move = undefined
+
+activePieces :: GameState -> [(BoardSquare, Piece)]
+-- ^Returns a list of the active side's pieces, as (BoardSquare, Piece)
+-- pairs.
+--
+-- Strictly, this returns a set (order is irrelevant and
+-- implementation-defined, each element should be distinct) but is a list
+-- for convenience and convention
+--
+-- Note, the below may fail due to ordering - TODO Fix this
+--
+-- >>> let pretty (x, y) = (toFEN x, toFEN y)
+-- >>> map pretty $ activePieces newGame
+-- [("g1","P"),("g2","P"),("g3","P"),("g4","P"),("g5","P"),("g6","P"),("g7","P"),("g8","P"),("h1","R"),("h2","N"),("h3","B"),("h4","Q"),("h5","K"),("h6","B"),("h7","N"),("h8","R")]
+-- >>> map pretty $ activePieces $ fromJust $ fromFEN "8/8/8/8/8/8/8/R7 w - - 0 1"
+-- [("h1","R")]
+--
+activePieces g =
+    let
+        activeSide = gameActiveSide g
+        Board b = gameBoard g
+        b' = assocs b :: [(BoardSquare, Maybe Piece)]
+        isPieceAndActive :: Maybe Piece -> Bool
+        isPieceAndActive Nothing = False
+        isPieceAndActive (Just (Piece _ s)) = s == activeSide
+        f' = filter (isPieceAndActive . snd) b' :: [(BoardSquare, Maybe Piece)]
+        h = map (\(x, y) -> (x, fromJust y)) f' -- This is grim, BUT because `isPieceAndActive Nothing = False` it works. TODO Refactor the last few to use `catMaybes` or similar for niceness
+    in h
