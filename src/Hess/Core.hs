@@ -265,7 +265,7 @@ move :: GameState -> BoardSquare -> BoardSquare -> Either MoveError GameState
 -- >>> let g = newGame
 -- >>> toFEN g
 -- "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
--- >>> toFEN $ move g (boardSquare' "a2") (boardSquare' "a4")
+-- >>> either (\_ -> "Fail :(") toFEN $ move g (boardSquare' "a2") (boardSquare' "a4")
 -- "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
 move = undefined
 
