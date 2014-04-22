@@ -257,3 +257,31 @@ stalemate = not . canMove
 canMove :: GameState -> Bool
 -- ^Can the current side make a valid move
 canMove = undefined
+
+activePieces :: GameState -> [(BoardSquare, Piece)]
+-- ^Returns a list of the active side's pieces, as (BoardSquare, Piece)
+-- pairs.
+--
+-- Strictly, this returns a set (order is irrelevant and
+-- implementation-defined, each element should be distinct) but is a list
+-- for convenience and convention
+--
+-- Note, the below may fail due to ordering - TODO Fix this
+--
+-- >>> let pretty (x, y) = (toFEN x, toFEN y)
+-- >>> map pretty $ activePieces newGame
+-- [("g1","P"),("g2","P"),("g3","P"),("g4","P"),("g5","P"),("g6","P"),("g7","P"),("g8","P"),("h1","R"),("h2","N"),("h3","B"),("h4","Q"),("h5","K"),("h6","B"),("h7","N"),("h8","R")]
+-- >>> map pretty $ activePieces $ fromJust $ fromFEN "8/8/8/8/8/8/8/R7 w - - 0 1"
+-- [("h1","R")]
+--
+activePieces g =
+    let
+        activeSide = gameActiveSide g
+        Board b = gameBoard g
+        b' = assocs b :: [(BoardSquare, Maybe Piece)]
+        isPieceAndActive :: Maybe Piece -> Bool
+        isPieceAndActive Nothing = False
+        isPieceAndActive (Just (Piece _ s)) = s == activeSide
+        f' = filter (isPieceAndActive . snd) b' :: [(BoardSquare, Maybe Piece)]
+        h = map (\(x, y) -> (x, fromJust y)) f'
+    in h
