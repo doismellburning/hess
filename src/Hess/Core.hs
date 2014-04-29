@@ -258,6 +258,29 @@ canMove :: GameState -> Bool
 -- ^Can the current side make a valid move
 canMove = undefined
 
+validEnds :: GameState -> BoardSquare -> [BoardSquare]
+-- ^Given a game and a square containing a piece (TODO encode this
+-- assumption in the type system somehow?), return a list of squares to
+-- which that piece could move
+--
+-- Currently partial, will eventually return [] when given square with no
+-- piece
+--
+-- Another "could/should return a set" (c.f. activePieces)
+validEnds g start =
+    let
+        piece = fromJust $ pieceAtSquare g start
+        pt = pieceType piece
+        board = gameBoard g
+        -- These functions aren't right
+        ms = moveSquares pt board
+        ts = threatSquares pt board
+    in ms `union` ts -- FIXME Wrong
+
+otherSide :: Side -> Side
+otherSide Black = White
+otherSide White = Black
+
 activePieces :: GameState -> [(BoardSquare, Piece)]
 -- ^Returns a list of the active side's pieces, as (BoardSquare, Piece)
 -- pairs.
