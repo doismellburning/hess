@@ -18,6 +18,9 @@ data GameState = GameState {
 
 data Board = Board (Array BoardSquare (Maybe Piece)) deriving (Eq, Show)
 
+onBoard :: Board -> BoardSquare -> Bool
+onBoard (Board b) bs = elem bs $ indices b
+
 data Side = Black | White deriving (Enum, Eq, Show)
 
 data CastlingState = CastlingState Bool Bool Bool Bool deriving (Eq, Show)
@@ -27,8 +30,20 @@ data BoardSquare = BoardSquare {
     rank :: Rank
 } deriving (Eq, Ix, Ord, Show)
 
+data BSDelta = BSDelta Int Int
+
+bsDeltaPlus :: BoardSquare -> BSDelta -> BoardSquare
+bsDeltaPlus (BoardSquare f r) (BSDelta fd rd) = BoardSquare (f `fileDeltaPlus` fd) (r `rankDeltaPlus` rd)
+
 newtype File = File Char deriving (Eq, Ix, Ord, Show)
+
+fileDeltaPlus :: File -> Int -> File
+fileDeltaPlus (File f) i = File $ chr $ i + ord f
+
 newtype Rank = Rank Int deriving (Eq, Ix, Ord, Show)
+
+rankDeltaPlus :: Rank -> Int -> Rank
+rankDeltaPlus (Rank r) i = Rank $ r + i
 
 data Piece = Piece {
     pieceType :: PieceType,
@@ -224,16 +239,16 @@ validateMove = undefined
 pieceAtSquare :: GameState -> BoardSquare -> Maybe Piece
 -- ^
 --
--- >>> let pieceAtSquare' g b = pieceAtSquare g (boardSquare' b)
--- >>> fmap toFEN $ pieceAtSquare' newGame "a1"
+-- >>> let pas g b = pieceAtSquare g (boardSquare' b)
+-- >>> fmap toFEN $ pas newGame "a1"
 -- Just "r"
--- >>> pieceAtSquare' newGame "d5"
+-- >>> pas newGame "d5"
 -- Nothing
--- >>> fmap toFEN $ pieceAtSquare' newGame "h8"
+-- >>> fmap toFEN $ pas newGame "h8"
 -- Just "R"
-pieceAtSquare g square =
-    let Board board = gameBoard g
-        in board ! square
+pieceAtSquare g square = pieceAtSquare' (gameBoard g) square
+
+pieceAtSquare' (Board b) square = b ! square
 
 moveStart (Move s _) = s
 moveEnd (Move _ e) = e
@@ -276,6 +291,25 @@ validEnds g start =
         ms = moveSquares pt board
         ts = threatSquares pt board
     in ms `union` ts -- FIXME Wrong
+
+safeBang :: Ix i => Array i e -> i -> Maybe e
+safeBang a i
+    | elem i (indices a) = Just $ a ! i
+    | otherwise = Nothing
+
+generateEnds :: Board -> BoardSquare -> BSDelta -> Maybe Int -> Bool -> [BoardSquare]
+generateEnds board start bsDelta limit canTake =
+    let
+        foos = iterate (flip bsDeltaPlus bsDelta) start -- Infinite list of potential endsquares
+        randomfn = maybe id take limit -- Convert our Maybe Int into either `id` or `take` to apply limit if it's present
+        bars = randomfn foos
+        appropriateEnd :: Board -> BoardSquare -> Bool
+        appropriateEnd b bs = onBoard b bs && ((isNothing $ pieceAtSquare' b bs) || (canTake)) -- TODO canTake
+    in
+        takeWhile (appropriateEnd board) bars
+
+moveSquares = undefined
+threatSquares = undefined
 
 otherSide :: Side -> Side
 otherSide Black = White
