@@ -267,6 +267,10 @@ stalemate :: GameState -> Bool
 -- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1" :: GameState
 -- >>> stalemate g
 -- True
+--
+-- >>> let g' = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 b - - 0 1" :: GameState
+-- >>> stalemate g
+-- False
 stalemate = not . canMove
 
 canMove :: GameState -> Bool
@@ -279,8 +283,8 @@ canMove g = (length $ allMoves g) > 0
 allMoves g =
     let
         (Board b) = gameBoard g
-        -- TODO Filter by activeSide
-        populatedSquares = catMaybes $ map (\(x, y) -> maybe Nothing (\_ -> Just x) y) $ assocs b
+        activeSide = gameActiveSide g
+        populatedSquares = catMaybes $ map (\(x, y) -> maybe Nothing (\piece -> if' (pieceSide piece == activeSide) (Just x) Nothing) y) $ assocs b -- TODO Simplify this line
         moves = concatMap (validEnds g) $ populatedSquares
     in
         moves
