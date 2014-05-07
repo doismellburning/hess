@@ -320,7 +320,11 @@ generateEnds board start bsDelta limit canTake =
         takeWhile (appropriateEnd board) bars
 
 moveSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
-moveSquares (Piece Rook _) board start = generateEnds board start (0, 1) Nothing True
+moveSquares (Piece Rook _) board start =
+    generateEnds board start (0, 1) Nothing True ++
+    generateEnds board start (0, -1) Nothing True ++
+    generateEnds board start (1, 0) Nothing True ++
+    generateEnds board start (-1, 0) Nothing True
 moveSquares _ _ _ = [] -- TODO
 
 threatSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
