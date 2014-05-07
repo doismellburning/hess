@@ -271,14 +271,19 @@ stalemate = not . canMove
 
 canMove :: GameState -> Bool
 -- ^Can the current side make a valid move
-canMove g =
+canMove g = (length $ allMoves g) > 0
+
+-- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1" :: GameState
+-- >>> allMoves g
+-- []
+allMoves g =
     let
         (Board b) = gameBoard g
         -- TODO Filter by activeSide
         populatedSquares = catMaybes $ map (\(x, y) -> maybe Nothing (\_ -> Just x) y) $ assocs b
         moves = concatMap (validEnds g) $ populatedSquares
     in
-        (length moves) > 0
+        moves
 
 validEnds :: GameState -> BoardSquare -> [BoardSquare]
 -- ^Given a game and a square containing a piece (TODO encode this
