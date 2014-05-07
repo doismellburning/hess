@@ -264,7 +264,7 @@ stalemate :: GameState -> Bool
 -- >>> stalemate newGame
 -- False
 --
--- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1"
+-- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1" :: GameState
 -- >>> stalemate g
 -- True
 stalemate = not . canMove
