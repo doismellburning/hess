@@ -30,10 +30,10 @@ data BoardSquare = BoardSquare {
     rank :: Rank
 } deriving (Eq, Ix, Ord, Show)
 
-data BSDelta = BSDelta Int Int
+type BSDelta = (Int, Int)
 
 bsDeltaPlus :: BoardSquare -> BSDelta -> BoardSquare
-bsDeltaPlus (BoardSquare f r) (BSDelta fd rd) = BoardSquare (f `fileDeltaPlus` fd) (r `rankDeltaPlus` rd)
+bsDeltaPlus (BoardSquare f r) (fd, rd) = BoardSquare (f `fileDeltaPlus` fd) (r `rankDeltaPlus` rd)
 
 newtype File = File Char deriving (Eq, Ix, Ord, Show)
 
@@ -271,7 +271,14 @@ stalemate = not . canMove
 
 canMove :: GameState -> Bool
 -- ^Can the current side make a valid move
-canMove = undefined
+canMove g =
+    let
+        (Board b) = gameBoard g
+        -- TODO Filter by activeSide
+        populatedSquares = catMaybes $ map (\(x, y) -> maybe Nothing (\_ -> Just x) y) $ assocs b
+        moves = concatMap (validEnds g) $ populatedSquares
+    in
+        (length moves) > 0
 
 validEnds :: GameState -> BoardSquare -> [BoardSquare]
 -- ^Given a game and a square containing a piece (TODO encode this
@@ -285,11 +292,10 @@ validEnds :: GameState -> BoardSquare -> [BoardSquare]
 validEnds g start =
     let
         piece = fromJust $ pieceAtSquare g start
-        pt = pieceType piece
         board = gameBoard g
         -- These functions aren't right
-        ms = moveSquares pt board
-        ts = threatSquares pt board
+        ms = moveSquares piece board start
+        ts = threatSquares piece board start
     in ms `union` ts -- FIXME Wrong
 
 safeBang :: Ix i => Array i e -> i -> Maybe e
@@ -308,8 +314,12 @@ generateEnds board start bsDelta limit canTake =
     in
         takeWhile (appropriateEnd board) bars
 
-moveSquares = undefined
-threatSquares = undefined
+moveSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
+moveSquares (Piece Rook _) board start = generateEnds board start (0, 1) Nothing True
+moveSquares _ _ _ = [] -- TODO
+
+threatSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
+threatSquares _ _ _ = [] -- TODO
 
 otherSide :: Side -> Side
 otherSide Black = White
