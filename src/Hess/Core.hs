@@ -277,9 +277,19 @@ canMove :: GameState -> Bool
 -- ^Can the current side make a valid move
 canMove g = (length $ allMoves g) > 0
 
+allMoves :: GameState -> [BoardSquare]
+-- ^
+-- Given a game, what squares can be moved to by the active side
+--
+-- Returns a pseudo-set (a `nub`-ed list)
+--
 -- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1" :: GameState
 -- >>> allMoves g
 -- []
+-- >>> let g' = fromJust $ fromFEN "r6r/8/8/8/8/8/8/8 b - - 0 1" :: GameState
+-- >>> map toFEN $ sort $ allMoves g'
+-- ["a1","a2","a3","a4","a5","a6","a7","a8","b1","c1","d1","e1","f1","g1","h1","h2","h3","h4","h5","h6","h7","h8"]
+--
 allMoves g =
     let
         (Board b) = gameBoard g
@@ -287,7 +297,7 @@ allMoves g =
         populatedSquares = catMaybes $ map (\(x, y) -> maybe Nothing (\piece -> if' (pieceSide piece == activeSide) (Just x) Nothing) y) $ assocs b -- TODO Simplify this line
         moves = concatMap (validEnds g) $ populatedSquares
     in
-        moves
+        nub moves
 
 validEnds :: GameState -> BoardSquare -> [BoardSquare]
 -- ^Given a game and a square containing a piece (TODO encode this
