@@ -342,7 +342,7 @@ moveSquares (Piece Rook _) board start =
 moveSquares _ _ _ = [] -- TODO
 
 threatSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
-threatSquares _ _ _ = [] -- TODO
+threatSquares = moveSquares -- TODO
 
 otherSide :: Side -> Side
 otherSide Black = White
