@@ -201,10 +201,10 @@ rowToFEN' (i, s) ((Just a):xs) = rowToFEN' (0, s ++ (show i) ++ a) xs
 
 boardToFEN (Board board) =
     let
-        rows = reverse $ chunkList 8 $ elems board :: [[Maybe Piece]] -- so now we have a 2D structure
+        rows = chunkList 8 $ elems board :: [[Maybe Piece]] -- so now we have a 2D structure
         fenSquares = map (map (fmap toFEN)) rows :: [[Maybe String]] -- and now the elements have maybe been FENified
         joinRows = intercalate "/" :: [String] -> String
-    in joinRows $ map rowToFEN fenSquares
+    in joinRows $ map rowToFEN $ transpose $ map reverse fenSquares
 
 rowFromFEN :: String -> Maybe [Maybe Piece]
 -- ^
@@ -242,9 +242,9 @@ rowFromFEN' c
 boardFromFEN :: String -> Maybe Board
 boardFromFEN s =
     let
-        rows = reverse $ split "/" s
+        rows = split "/" s
         rows' = map rowFromFEN rows :: [Maybe [Maybe Piece]]
-        joined = fmap concat $ sequence rows' :: Maybe [Maybe Piece]
+        joined = fmap concat $ fmap (map reverse) $ fmap transpose $ sequence rows' :: Maybe [Maybe Piece]
     in fmap (Board . listArray ((boardSquare' "a1"), (boardSquare' "h8"))) joined
 
 isPromotionMove :: GameState -> Move -> Bool
