@@ -342,6 +342,7 @@ generateEnds board start bsDelta limit canTake =
     in
         takeWhile (appropriateEnd board) bars
 
+-- TODO Need to refactor these types
 moveSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
 moveSquares (Piece Rook _) board start =
     generateEnds board start (0, 1) Nothing True ++
