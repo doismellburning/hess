@@ -207,6 +207,15 @@ boardToFEN (Board board) =
     in joinRows $ map rowToFEN fenSquares
 
 rowFromFEN :: String -> Maybe [Maybe Piece]
+-- ^
+--
+-- >>> rowFromFEN "8"
+-- Just [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]
+--
+-- Ignore the multiple fmaps below, they're just for presentation
+-- >>> (fmap (fmap (fmap toFEN))) $ rowFromFEN "3r4"
+-- Just [Nothing,Nothing,Nothing,Just "r",Nothing,Nothing,Nothing,Nothing]
+--
 rowFromFEN s = -- Totally a way of making this nicer...
     let ss = map rowFromFEN' s :: [Maybe [Maybe Piece]]
     -- And now, if any elements of ss are Nothing, we return Nothing,
