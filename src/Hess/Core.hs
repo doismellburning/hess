@@ -300,11 +300,13 @@ allMoves :: GameState -> [BoardSquare]
 allMoves g =
     let
         (Board b) = gameBoard g
-        activeSide = gameActiveSide g
-        populatedSquares = catMaybes $ map (\(x, y) -> maybe Nothing (\piece -> if' (pieceSide piece == activeSide) (Just x) Nothing) y) $ assocs b -- TODO Simplify this line
+        populatedSquares = map fst $ filter (\(_, x) -> maybe False (isPieceActive g) x) $ assocs b
         moves = concatMap (validEnds g) $ populatedSquares
     in
         nub moves
+
+isPieceActive :: GameState -> Piece -> Bool
+isPieceActive g p = (gameActiveSide g) == (pieceSide p)
 
 validEnds :: GameState -> BoardSquare -> [BoardSquare]
 -- ^Given a game and a square containing a piece (TODO encode this
