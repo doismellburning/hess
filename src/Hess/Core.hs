@@ -215,6 +215,17 @@ rowFromFEN s = -- Totally a way of making this nicer...
     in foldM (\x y -> maybe Nothing (\z -> Just $ x ++ z) y) [] ss
 
 rowFromFEN' :: Char -> Maybe [Maybe Piece]
+-- ^Turns a character of board FEN into a series of Maybe Pieces
+--
+-- The return type is a bit awkward; it's Just a list of Maybe Pieces
+-- assuming we parse the Char ok, otherwise it's Nothing
+--
+-- >>> rowFromFEN' '2'
+-- Just [Nothing,Nothing]
+--
+-- Ignore the multiple fmaps below, they're just for presentation
+-- >>> fmap (fmap (fmap toFEN)) $ rowFromFEN' 'r'
+-- Just [Just "r"]
 rowFromFEN' c
     | isDigit c = Just $ replicate (digitToInt c) Nothing
     | otherwise = (fromFEN [c]) >>= (\x -> Just [Just x]) -- Probably could be nicer with Monoid stuff or sth
