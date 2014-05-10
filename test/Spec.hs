@@ -59,3 +59,8 @@ main = hspec $ do
             let
                 cs = CastlingState False True True False
                 in (fromFEN $ toFEN cs) `shouldBe` Just cs
+
+        it "decodes board FEN with the correct rank/file orderings" $ do
+            let
+                g = fromJust $ fromFEN simpleRookFEN :: GameState
+                in pieceAtSquare g (boardSquare' "d1") `shouldBe` fromFEN "R"
