@@ -201,7 +201,7 @@ rowToFEN' (i, s) ((Just a):xs) = rowToFEN' (0, s ++ (show i) ++ a) xs
 
 boardToFEN (Board board) =
     let
-        rows = chunkList 8 $ elems board :: [[Maybe Piece]] -- so now we have a 2D structure
+        rows = reverse $ chunkList 8 $ elems board :: [[Maybe Piece]] -- so now we have a 2D structure
         fenSquares = map (map (fmap toFEN)) rows :: [[Maybe String]] -- and now the elements have maybe been FENified
         joinRows = intercalate "/" :: [String] -> String
     in joinRows $ map rowToFEN fenSquares
@@ -222,7 +222,7 @@ rowFromFEN' c
 boardFromFEN :: String -> Maybe Board
 boardFromFEN s =
     let
-        rows = split "/" s
+        rows = reverse $ split "/" s
         rows' = map rowFromFEN rows :: [Maybe [Maybe Piece]]
         joined = fmap concat $ sequence rows' :: Maybe [Maybe Piece]
     in fmap (Board . listArray ((boardSquare' "a1"), (boardSquare' "h8"))) joined
@@ -241,11 +241,11 @@ pieceAtSquare :: GameState -> BoardSquare -> Maybe Piece
 --
 -- >>> let pas g b = pieceAtSquare g (boardSquare' b)
 -- >>> fmap toFEN $ pas newGame "a1"
--- Just "r"
+-- Just "R"
 -- >>> pas newGame "d5"
 -- Nothing
 -- >>> fmap toFEN $ pas newGame "h8"
--- Just "R"
+-- Just "r"
 pieceAtSquare g square = pieceAtSquare' (gameBoard g) square
 
 pieceAtSquare' (Board b) square = b ! square
@@ -362,7 +362,7 @@ activePieces :: GameState -> [(BoardSquare, Piece)]
 -- >>> map pretty $ activePieces newGame
 -- [("g1","P"),("g2","P"),("g3","P"),("g4","P"),("g5","P"),("g6","P"),("g7","P"),("g8","P"),("h1","R"),("h2","N"),("h3","B"),("h4","Q"),("h5","K"),("h6","B"),("h7","N"),("h8","R")]
 -- >>> map pretty $ activePieces $ fromJust $ fromFEN "8/8/8/8/8/8/8/R7 w - - 0 1"
--- [("h1","R")]
+-- [("a1","R")]
 --
 activePieces g =
     let
