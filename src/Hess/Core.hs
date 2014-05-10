@@ -390,7 +390,7 @@ activePieces :: GameState -> [(BoardSquare, Piece)]
 --
 -- >>> let pretty (x, y) = (toFEN x, toFEN y)
 -- >>> map pretty $ activePieces newGame
--- [("g1","P"),("g2","P"),("g3","P"),("g4","P"),("g5","P"),("g6","P"),("g7","P"),("g8","P"),("h1","R"),("h2","N"),("h3","B"),("h4","Q"),("h5","K"),("h6","B"),("h7","N"),("h8","R")]
+-- [("a1","R"),("a2","P"),("b1","N"),("b2","P"),("c1","B"),("c2","P"),("d1","Q"),("d2","P"),("e1","K"),("e2","P"),("f1","B"),("f2","P"),("g1","N"),("g2","P"),("h1","R"),("h2","P")]
 -- >>> map pretty $ activePieces $ fromJust $ fromFEN "8/8/8/8/8/8/8/R7 w - - 0 1"
 -- [("a1","R")]
 --
