@@ -283,12 +283,19 @@ allMoves :: GameState -> [BoardSquare]
 --
 -- Returns a pseudo-set (a `nub`-ed list)
 --
+-- >>> let prettyPrintMoves g = map toFEN $ sort $ allMoves g
+--
 -- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1" :: GameState
--- >>> allMoves g
+-- >>> prettyPrintMoves g
 -- []
+--
 -- >>> let g' = fromJust $ fromFEN "r6r/8/8/8/8/8/8/8 b - - 0 1" :: GameState
--- >>> map toFEN $ sort $ allMoves g'
--- ["a1","a2","a3","a4","a5","a6","a7","a8","b1","c1","d1","e1","f1","g1","h1","h2","h3","h4","h5","h6","h7","h8"]
+-- >>> prettyPrintMoves g'
+-- ["a1","a2","a3","a4","a5","a6","a7","b8","c8","d8","e8","f8","g8","h1","h2","h3","h4","h5","h6","h7"]
+--
+-- >>> let g'' = fromJust $ fromFEN "8/3k4/8/8/8/8/8/8 b - - 0 1" :: GameState
+-- >>> prettyPrintMoves g''
+-- []
 --
 allMoves g =
     let
