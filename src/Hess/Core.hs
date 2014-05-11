@@ -32,8 +32,12 @@ data BoardSquare = BoardSquare {
 
 type BSDelta = (Int, Int)
 
-bsDeltaPlus :: BoardSquare -> BSDelta -> BoardSquare
-bsDeltaPlus (BoardSquare f r) (fd, rd) = BoardSquare (f `fileDeltaPlus` fd) (r `rankDeltaPlus` rd)
+bsDeltaPlus :: Board -> BoardSquare -> BSDelta -> Maybe BoardSquare
+bsDeltaPlus b (BoardSquare f r) (fd, rd) =
+    let
+        new = BoardSquare (f `fileDeltaPlus` fd) (r `rankDeltaPlus` rd)
+    in
+        if' (onBoard b new) (Just new) Nothing
 
 newtype File = File Char deriving (Eq, Ix, Ord, Show)
 
@@ -351,16 +355,23 @@ safeBang a i
     | elem i (indices a) = Just $ a ! i
     | otherwise = Nothing
 
+
+-- Could use a refactor
 generateEnds :: Board -> BoardSquare -> BSDelta -> Maybe Int -> Bool -> [BoardSquare]
-generateEnds board start bsDelta limit canTake =
+generateEnds _ _ _ (Just 0) _ = []
+generateEnds board start bsDelta limit canTake = generateEnds' board start start bsDelta limit canTake
+generateEnds' board realStart start bsDelta limit canTake =
     let
-        foos = iterate (flip bsDeltaPlus bsDelta) start -- Infinite list of potential endsquares
-        randomfn = maybe id take limit -- Convert our Maybe Int into either `id` or `take` to apply limit if it's present
-        bars = randomfn foos
-        appropriateEnd :: Board -> BoardSquare -> Bool
-        appropriateEnd b bs = onBoard b bs && ((isNothing $ pieceAtSquare' b bs) || (canTake)) -- TODO canTake
-    in
-        takeWhile (appropriateEnd board) bars
+        end = bsDeltaPlus board start bsDelta
+    in case end of
+        Nothing -> []
+        Just bs ->
+            let
+                endPiece = pieceAtSquare' board bs
+            in case endPiece of
+                Nothing -> [bs] ++ generateEnds' board realStart bs bsDelta (fmap (\x -> x - 1) limit) canTake
+                Just piece -> if' (canTake && (pieceSide $ fromJust $ pieceAtSquare' board realStart) /= (pieceSide piece)) [bs] []
+
 
 -- TODO Need to refactor these types
 moveSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
