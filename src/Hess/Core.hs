@@ -380,6 +380,13 @@ moveSquares (Piece Rook _) board start =
     generateEnds board start (0, -1) Nothing True ++
     generateEnds board start (1, 0) Nothing True ++
     generateEnds board start (-1, 0) Nothing True
+moveSquares (Piece Pawn side) board start =
+    let
+        startRank = rank start
+        isOnStartingRank = (side == White && startRank == Rank 2) || (side == Black && startRank == Rank 7)
+        delta = if' (side == White) 1 (-1) :: Int
+        limit = if' isOnStartingRank 2 1
+    in generateEnds board start (0, delta) (Just limit) False
 moveSquares _ _ _ = [] -- TODO
 
 threatSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
