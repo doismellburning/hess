@@ -18,6 +18,9 @@ data GameState = GameState {
 
 data Board = Board (Array BoardSquare (Maybe Piece)) deriving (Eq, Show)
 
+onBoard :: Board -> BoardSquare -> Bool
+onBoard (Board b) bs = elem bs $ indices b
+
 data Side = Black | White deriving (Enum, Eq, Show)
 
 data CastlingState = CastlingState Bool Bool Bool Bool deriving (Eq, Show)
@@ -27,8 +30,24 @@ data BoardSquare = BoardSquare {
     rank :: Rank
 } deriving (Eq, Ix, Ord, Show)
 
+type BSDelta = (Int, Int)
+
+bsDeltaPlus :: Board -> BoardSquare -> BSDelta -> Maybe BoardSquare
+bsDeltaPlus b (BoardSquare f r) (fd, rd) =
+    let
+        new = BoardSquare (f `fileDeltaPlus` fd) (r `rankDeltaPlus` rd)
+    in
+        if' (onBoard b new) (Just new) Nothing
+
 newtype File = File Char deriving (Eq, Ix, Ord, Show)
+
+fileDeltaPlus :: File -> Int -> File
+fileDeltaPlus (File f) i = File $ chr $ i + ord f
+
 newtype Rank = Rank Int deriving (Eq, Ix, Ord, Show)
+
+rankDeltaPlus :: Rank -> Int -> Rank
+rankDeltaPlus (Rank r) i = Rank $ r + i
 
 data Piece = Piece {
     pieceType :: PieceType,
@@ -189,9 +208,18 @@ boardToFEN (Board board) =
         rows = chunkList 8 $ elems board :: [[Maybe Piece]] -- so now we have a 2D structure
         fenSquares = map (map (fmap toFEN)) rows :: [[Maybe String]] -- and now the elements have maybe been FENified
         joinRows = intercalate "/" :: [String] -> String
-    in joinRows $ map rowToFEN fenSquares
+    in joinRows $ map rowToFEN $ transpose $ map reverse fenSquares
 
 rowFromFEN :: String -> Maybe [Maybe Piece]
+-- ^
+--
+-- >>> rowFromFEN "8"
+-- Just [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]
+--
+-- Ignore the multiple fmaps below, they're just for presentation
+-- >>> (fmap (fmap (fmap toFEN))) $ rowFromFEN "3r4"
+-- Just [Nothing,Nothing,Nothing,Just "r",Nothing,Nothing,Nothing,Nothing]
+--
 rowFromFEN s = -- Totally a way of making this nicer...
     let ss = map rowFromFEN' s :: [Maybe [Maybe Piece]]
     -- And now, if any elements of ss are Nothing, we return Nothing,
@@ -200,6 +228,17 @@ rowFromFEN s = -- Totally a way of making this nicer...
     in foldM (\x y -> maybe Nothing (\z -> Just $ x ++ z) y) [] ss
 
 rowFromFEN' :: Char -> Maybe [Maybe Piece]
+-- ^Turns a character of board FEN into a series of Maybe Pieces
+--
+-- The return type is a bit awkward; it's Just a list of Maybe Pieces
+-- assuming we parse the Char ok, otherwise it's Nothing
+--
+-- >>> rowFromFEN' '2'
+-- Just [Nothing,Nothing]
+--
+-- Ignore the multiple fmaps below, they're just for presentation
+-- >>> fmap (fmap (fmap toFEN)) $ rowFromFEN' 'r'
+-- Just [Just "r"]
 rowFromFEN' c
     | isDigit c = Just $ replicate (digitToInt c) Nothing
     | otherwise = (fromFEN [c]) >>= (\x -> Just [Just x]) -- Probably could be nicer with Monoid stuff or sth
@@ -209,7 +248,7 @@ boardFromFEN s =
     let
         rows = split "/" s
         rows' = map rowFromFEN rows :: [Maybe [Maybe Piece]]
-        joined = fmap concat $ sequence rows' :: Maybe [Maybe Piece]
+        joined = fmap concat $ fmap (map reverse) $ fmap transpose $ sequence rows' :: Maybe [Maybe Piece]
     in fmap (Board . listArray ((boardSquare' "a1"), (boardSquare' "h8"))) joined
 
 isPromotionMove :: GameState -> Move -> Bool
@@ -224,16 +263,16 @@ validateMove = undefined
 pieceAtSquare :: GameState -> BoardSquare -> Maybe Piece
 -- ^
 --
--- >>> let pieceAtSquare' g b = pieceAtSquare g (boardSquare' b)
--- >>> fmap toFEN $ pieceAtSquare' newGame "a1"
--- Just "r"
--- >>> pieceAtSquare' newGame "d5"
--- Nothing
--- >>> fmap toFEN $ pieceAtSquare' newGame "h8"
+-- >>> let pas g b = pieceAtSquare g (boardSquare' b)
+-- >>> fmap toFEN $ pas newGame "a1"
 -- Just "R"
-pieceAtSquare g square =
-    let Board board = gameBoard g
-        in board ! square
+-- >>> pas newGame "d5"
+-- Nothing
+-- >>> fmap toFEN $ pas newGame "h8"
+-- Just "r"
+pieceAtSquare g square = pieceAtSquare' (gameBoard g) square
+
+pieceAtSquare' (Board b) square = b ! square
 
 moveStart (Move s _) = s
 moveEnd (Move _ e) = e
@@ -246,17 +285,116 @@ newGame = fromJust $ fromFEN startingFEN
 stalemate :: GameState -> Bool
 -- ^Are we in stalemate, i.e. not in check but unable to move
 --
--- -- >>> stalemate newGame
--- -- False
+-- >>> stalemate newGame
+-- False
 --
--- -- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1"
--- -- >>> stalemate g
--- -- True
+-- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1" :: GameState
+-- >>> stalemate g
+-- True
+--
+-- >>> let g' = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 b - - 0 1" :: GameState
+-- >>> stalemate g'
+-- False
 stalemate = not . canMove
 
 canMove :: GameState -> Bool
 -- ^Can the current side make a valid move
-canMove = undefined
+canMove g = (length $ allMoves g) > 0
+
+allMoves :: GameState -> [BoardSquare]
+-- ^
+-- Given a game, what squares can be moved to by the active side
+--
+-- Returns a pseudo-set (a `nub`-ed list)
+--
+-- >>> let prettyPrintMoves g = map toFEN $ sort $ allMoves g
+--
+-- >>> let g = fromJust $ fromFEN "r1r5/1K6/7r/8/8/8/8/8 w - - 0 1" :: GameState
+-- >>> prettyPrintMoves g
+-- []
+--
+-- >>> let g' = fromJust $ fromFEN "r6r/8/8/8/8/8/8/8 b - - 0 1" :: GameState
+-- >>> prettyPrintMoves g'
+-- ["a1","a2","a3","a4","a5","a6","a7","b8","c8","d8","e8","f8","g8","h1","h2","h3","h4","h5","h6","h7"]
+--
+-- >>> let g'' = fromJust $ fromFEN "8/3k4/8/8/8/8/8/8 b - - 0 1" :: GameState
+-- >>> prettyPrintMoves g''
+-- []
+--
+allMoves g =
+    let
+        (Board b) = gameBoard g
+        populatedSquares = map fst $ filter (\(_, x) -> maybe False (isPieceActive g) x) $ assocs b
+        moves = concatMap (validEnds g) $ populatedSquares
+    in
+        nub moves
+
+isPieceActive :: GameState -> Piece -> Bool
+isPieceActive g p = (gameActiveSide g) == (pieceSide p)
+
+validEnds :: GameState -> BoardSquare -> [BoardSquare]
+-- ^Given a game and a square containing a piece (TODO encode this
+-- assumption in the type system somehow?), return a list of squares to
+-- which that piece could move
+--
+-- Currently partial, will eventually return [] when given square with no
+-- piece
+--
+-- Another "could/should return a set" (c.f. activePieces)
+validEnds g start =
+    let
+        piece = fromJust $ pieceAtSquare g start
+        board = gameBoard g
+        -- These functions aren't right
+        ms = moveSquares piece board start
+        ts = threatSquares piece board start
+    in ms `union` ts -- FIXME Wrong
+
+safeBang :: Ix i => Array i e -> i -> Maybe e
+safeBang a i
+    | elem i (indices a) = Just $ a ! i
+    | otherwise = Nothing
+
+
+-- Could use a refactor
+generateEnds :: Board -> BoardSquare -> BSDelta -> Maybe Int -> Bool -> [BoardSquare]
+generateEnds _ _ _ (Just 0) _ = []
+generateEnds board start bsDelta limit canTake = generateEnds' board start start bsDelta limit canTake
+generateEnds' board realStart start bsDelta limit canTake =
+    let
+        end = bsDeltaPlus board start bsDelta
+    in case end of
+        Nothing -> []
+        Just bs ->
+            let
+                endPiece = pieceAtSquare' board bs
+            in case endPiece of
+                Nothing -> [bs] ++ generateEnds' board realStart bs bsDelta (fmap (\x -> x - 1) limit) canTake
+                Just piece -> if' (canTake && (pieceSide $ fromJust $ pieceAtSquare' board realStart) /= (pieceSide piece)) [bs] []
+
+
+-- TODO Need to refactor these types
+moveSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
+moveSquares (Piece Rook _) board start =
+    generateEnds board start (0, 1) Nothing True ++
+    generateEnds board start (0, -1) Nothing True ++
+    generateEnds board start (1, 0) Nothing True ++
+    generateEnds board start (-1, 0) Nothing True
+moveSquares (Piece Pawn side) board start =
+    let
+        startRank = rank start
+        isOnStartingRank = (side == White && startRank == Rank 2) || (side == Black && startRank == Rank 7)
+        delta = if' (side == White) 1 (-1) :: Int
+        limit = if' isOnStartingRank 2 1
+    in generateEnds board start (0, delta) (Just limit) False
+moveSquares _ _ _ = [] -- TODO
+
+threatSquares :: Piece -> Board -> BoardSquare -> [BoardSquare]
+threatSquares = moveSquares -- TODO
+
+otherSide :: Side -> Side
+otherSide Black = White
+otherSide White = Black
 
 move :: GameState -> BoardSquare -> BoardSquare -> Either MoveError GameState
 -- ^Applies a move to a GameState if it's valid (returning a Right
@@ -281,9 +419,9 @@ activePieces :: GameState -> [(BoardSquare, Piece)]
 --
 -- >>> let pretty (x, y) = (toFEN x, toFEN y)
 -- >>> map pretty $ activePieces newGame
--- [("g1","P"),("g2","P"),("g3","P"),("g4","P"),("g5","P"),("g6","P"),("g7","P"),("g8","P"),("h1","R"),("h2","N"),("h3","B"),("h4","Q"),("h5","K"),("h6","B"),("h7","N"),("h8","R")]
+-- [("a1","R"),("a2","P"),("b1","N"),("b2","P"),("c1","B"),("c2","P"),("d1","Q"),("d2","P"),("e1","K"),("e2","P"),("f1","B"),("f2","P"),("g1","N"),("g2","P"),("h1","R"),("h2","P")]
 -- >>> map pretty $ activePieces $ fromJust $ fromFEN "8/8/8/8/8/8/8/R7 w - - 0 1"
--- [("h1","R")]
+-- [("a1","R")]
 --
 activePieces g =
     let
