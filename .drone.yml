@@ -1,0 +1,2 @@
+image: bradrydzewski/haskell:7.4
+script: make test
