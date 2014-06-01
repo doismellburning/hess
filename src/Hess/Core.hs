@@ -405,7 +405,26 @@ move :: GameState -> BoardSquare -> BoardSquare -> Either MoveError GameState
 -- "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 -- >>> either (\_ -> "Fail :(") toFEN $ move g (boardSquare' "a2") (boardSquare' "a4")
 -- "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
-move = undefined
+move g start end =
+    let
+        newB = moveBoard (gameBoard g) start end
+        newG = g
+        s = gameActiveSide g
+        newSide = otherSide s
+        newFM = if' (s == Black) (1+) (0+) $ gameFullMove g
+        -- TODO Castling
+        -- TODO enP
+        -- TODO halfmove
+    in
+        Right newG {gameActiveSide = newSide, gameFullMove = newFM, gameBoard = newB}
+
+moveBoard :: Board -> BoardSquare -> BoardSquare -> Board
+-- Hacky, partial
+moveBoard (Board b) start end =
+    let
+        pieceAtStart = fromJust $ pieceAtSquare' (Board b) start
+    in
+        Board $ b // [(end, Just pieceAtStart), (start, Nothing)]
 
 activePieces :: GameState -> [(BoardSquare, Piece)]
 -- ^Returns a list of the active side's pieces, as (BoardSquare, Piece)
