@@ -11,7 +11,7 @@ data GameState = GameState {
     gameBoard :: Board,
     gameActiveSide :: Side,
     gameCastlingState :: CastlingState,
-    gameEnPassanti :: EnPassant,
+    gameEnPassant :: EnPassant,
     gameHalfMove :: Int,
     gameFullMove :: Int
 } deriving (Eq, Show)
