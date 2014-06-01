@@ -409,16 +409,21 @@ move :: GameState -> BoardSquare -> BoardSquare -> Either MoveError GameState
 -- "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
 move g start end =
     let
-        newB = moveBoard (gameBoard g) start end
-        newG = g
+        b = gameBoard g
+        newB = moveBoard b start end
+        piece = fromJust $ pieceAtSquare g start -- TODO Ew
         s = gameActiveSide g
         newSide = otherSide s
         newFM = if' (s == Black) (1+) (0+) $ gameFullMove g
         -- TODO Castling
         -- TODO enP
+        newEP = EnPassant $
+            case (pieceType piece) of
+                Pawn -> Just $ if' (pieceSide piece == Black) (fromJust $ bsDeltaPlus b start (0, -1)) (fromJust $ bsDeltaPlus b start (0, 1)) -- TODO EW
+                _ -> Nothing
         -- TODO halfmove
     in
-        Right newG {gameActiveSide = newSide, gameFullMove = newFM, gameBoard = newB}
+        Right g {gameActiveSide = newSide, gameFullMove = newFM, gameBoard = newB, gameEnPassant = newEP}
 
 moveBoard :: Board -> BoardSquare -> BoardSquare -> Board
 -- Hacky, partial
