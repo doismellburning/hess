@@ -403,9 +403,10 @@ move :: GameState -> BoardSquare -> BoardSquare -> Either MoveError GameState
 -- TODO Implementation currently makes this a lie; massively partial
 --
 -- >>> let g = newGame
+-- >>> let prettyMove game start end = either (\_ -> "Fail :(") toFEN $ move game (boardSquare' start) (boardSquare' end)
 -- >>> toFEN g
 -- "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
--- >>> either (\_ -> "Fail :(") toFEN $ move g (boardSquare' "a2") (boardSquare' "a4")
+-- >>> prettyMove g "a2" "a4"
 -- "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
 move g start end =
     let
