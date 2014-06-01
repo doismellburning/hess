@@ -400,6 +400,8 @@ move :: GameState -> BoardSquare -> BoardSquare -> Either MoveError GameState
 -- ^Applies a move to a GameState if it's valid (returning a Right
 -- GameState) or a Left MoveErrror if it's not a valid move
 --
+-- TODO Implementation currently makes this a lie; massively partial
+--
 -- >>> let g = newGame
 -- >>> toFEN g
 -- "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
