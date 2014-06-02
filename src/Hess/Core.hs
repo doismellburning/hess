@@ -413,10 +413,18 @@ move g start end =
         b = gameBoard g
         newB = moveBoard b start end
         piece = fromJust $ pieceAtSquare g start -- TODO Ew
+        pt = pieceType piece
         s = gameActiveSide g
         newSide = otherSide s
         newFM = if' (s == Black) (1+) (0+) $ gameFullMove g
-        -- TODO Castling
+        -- Start of Castling
+        CastlingState wk wq bk bq = gameCastlingState g
+        wk' = not $ s == White && (pt == King || pt == Rook && file start == File 'h')
+        wq' = not $ s == White && (pt == King || pt == Rook && file start == File 'a')
+        bk' = not $ s == Black && (pt == King || pt == Rook && file start == File 'h')
+        bq' = not $ s == Black && (pt == King || pt == Rook && file start == File 'a')
+        newCS = CastlingState (wk && wk') (wq && wq') (bk && bk') (bq && bq')
+        -- End of Castling
         newEP = EnPassant $
             case (pieceType piece) of
                 Pawn -> Just $ if' (pieceSide piece == Black) (fromJust $ bsDeltaPlus b start (0, -1)) (fromJust $ bsDeltaPlus b start (0, 1)) -- TODO EW
@@ -424,7 +432,7 @@ move g start end =
         isCapture = isJust $ pieceAtSquare g end :: Bool
         newHM = if' (isCapture || (pieceType piece == Pawn)) 0 (1 + gameHalfMove g)
     in
-        Right g {gameActiveSide = newSide, gameFullMove = newFM, gameBoard = newB, gameEnPassant = newEP, gameHalfMove = newHM}
+        Right g {gameActiveSide = newSide, gameFullMove = newFM, gameBoard = newB, gameEnPassant = newEP, gameHalfMove = newHM, gameCastlingState = newCS}
 
 unsafeMove :: GameState -> BoardSquare -> BoardSquare -> GameState
 unsafeMove g a b = either undefined id $ move g a b
