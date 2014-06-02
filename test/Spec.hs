@@ -64,3 +64,9 @@ main = hspec $ do
             let
                 g = fromJust $ fromFEN simpleRookFEN :: GameState
                 in pieceAtSquare g (boardSquare' "d1") `shouldBe` fromFEN "R"
+
+        it "correctly increments the halfmove counter" $ do
+            let
+                g = newGame
+                g' = unsafeMove g (boardSquare' "g1") (boardSquare' "f3")
+                in (gameHalfMove g') `shouldBe` 1
