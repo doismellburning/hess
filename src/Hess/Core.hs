@@ -421,9 +421,10 @@ move g start end =
             case (pieceType piece) of
                 Pawn -> Just $ if' (pieceSide piece == Black) (fromJust $ bsDeltaPlus b start (0, -1)) (fromJust $ bsDeltaPlus b start (0, 1)) -- TODO EW
                 _ -> Nothing
-        -- TODO halfmove
+        isCapture = isJust $ pieceAtSquare g end :: Bool
+        newHM = if' (isCapture || (pieceType piece == Pawn)) 0 (1 + gameHalfMove g)
     in
-        Right g {gameActiveSide = newSide, gameFullMove = newFM, gameBoard = newB, gameEnPassant = newEP}
+        Right g {gameActiveSide = newSide, gameFullMove = newFM, gameBoard = newB, gameEnPassant = newEP, gameHalfMove = newHM}
 
 unsafeMove :: GameState -> BoardSquare -> BoardSquare -> GameState
 unsafeMove g a b = either undefined id $ move g a b
