@@ -79,3 +79,12 @@ main = hspec $ do
                 eps = map gameEnPassant games :: [EnPassant]
                 eps' = map (\(EnPassant e) -> fmap toFEN e) eps :: [Maybe String]
                 in eps' `shouldBe` [Nothing, Just "e3", Just "c6", Nothing, Just "a6"]
+
+        it "correctly updates castling state" $ do
+            let
+                game = fromJust $ fromFEN pawnlessFEN :: GameState
+                move' = \g (a,b) -> unsafeMove g (boardSquare' a) (boardSquare' b)
+                moves = [("a1", "a2"), ("e8", "e7"), ("e1", "e2")]
+                games = scanl move' game moves
+                cs = map (toFEN . gameCastlingState) games
+                in cs `shouldBe` ["KQkq", "Kkq", "K", "-"]
