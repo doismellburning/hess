@@ -88,3 +88,11 @@ main = hspec $ do
                 games = scanl move' game moves
                 cs = map (toFEN . gameCastlingState) games
                 in cs `shouldBe` ["KQkq", "Kkq", "K", "-"]
+
+        it "handles en-passant correctly" $ do
+            let
+                game = fromJust $ fromFEN pawnlessFEN
+                move' = \g (a,b) -> unsafeMove g (boardSquare' a) (boardSquare' b)
+                game' = move' game ("b2", "b4")
+                game'' = move' game' ("a4", "b3")
+                in (pieceAtSquare game'' (boardSquare' "b4")) `shouldBe` Nothing
