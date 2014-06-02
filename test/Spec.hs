@@ -70,3 +70,12 @@ main = hspec $ do
                 g = newGame
                 g' = unsafeMove g (boardSquare' "g1") (boardSquare' "f3")
                 in (gameHalfMove g') `shouldBe` 1
+
+        it "correctly updates en-passant" $ do
+            let
+                moves = [("e2", "e4"), ("c7", "c5"), ("g1", "f3"), ("a7", "a5")]
+                move' = \g (a,b) -> unsafeMove g (boardSquare' a) (boardSquare' b)
+                games = scanl move' newGame moves
+                eps = map gameEnPassant games :: [EnPassant]
+                eps' = map (\(EnPassant e) -> fmap toFEN e) eps :: [Maybe String]
+                in eps' `shouldBe` [Nothing, Just "e3", Just "c6", Nothing, Just "a6"]
