@@ -417,7 +417,6 @@ move g start end =
         newSide = otherSide s
         newFM = if' (s == Black) (1+) (0+) $ gameFullMove g
         -- TODO Castling
-        -- TODO enP
         newEP = EnPassant $
             case (pieceType piece) of
                 Pawn -> Just $ if' (pieceSide piece == Black) (fromJust $ bsDeltaPlus b start (0, -1)) (fromJust $ bsDeltaPlus b start (0, 1)) -- TODO EW
