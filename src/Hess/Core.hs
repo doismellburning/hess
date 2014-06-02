@@ -64,7 +64,11 @@ data PieceType = Pawn
 
 data EnPassant = EnPassant (Maybe BoardSquare) deriving (Show, Eq)
 
-data Move = Move BoardSquare BoardSquare
+data Move = Move {
+    moveStart :: BoardSquare,
+    moveEnd :: BoardSquare,
+    promotionData :: Maybe PieceType
+}
 
 data MoveError = MoveError -- TODO
 
@@ -273,9 +277,6 @@ pieceAtSquare :: GameState -> BoardSquare -> Maybe Piece
 pieceAtSquare g square = pieceAtSquare' (gameBoard g) square
 
 pieceAtSquare' (Board b) square = b ! square
-
-moveStart (Move s _) = s
-moveEnd (Move _ e) = e
 
 startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
