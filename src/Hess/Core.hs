@@ -426,6 +426,9 @@ move g start end =
     in
         Right g {gameActiveSide = newSide, gameFullMove = newFM, gameBoard = newB, gameEnPassant = newEP}
 
+unsafeMove :: GameState -> BoardSquare -> BoardSquare -> GameState
+unsafeMove g a b = either undefined id $ move g a b
+
 moveBoard :: Board -> BoardSquare -> BoardSquare -> Board
 -- Hacky, partial
 moveBoard (Board b) start end =
