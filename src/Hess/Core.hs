@@ -397,20 +397,23 @@ otherSide :: Side -> Side
 otherSide Black = White
 otherSide White = Black
 
-move :: GameState -> BoardSquare -> BoardSquare -> Either MoveError GameState
+move :: GameState -> Move -> Either MoveError GameState
 -- ^Applies a move to a GameState if it's valid (returning a Right
 -- GameState) or a Left MoveErrror if it's not a valid move
 --
 -- TODO Implementation currently makes this a lie; massively partial
 --
 -- >>> let g = newGame
--- >>> let prettyMove game start end = either (\_ -> "Fail :(") toFEN $ move game (boardSquare' start) (boardSquare' end)
+-- >>> let makeMove a b = Move {moveStart = boardSquare' a, moveEnd = boardSquare' b, promotionData = Nothing}
+-- >>> let prettyMove game start end = either (\_ -> "Fail :(") toFEN $ move game $ makeMove start end
 -- >>> toFEN g
 -- "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 -- >>> prettyMove g "a2" "a4"
 -- "rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1"
-move g start end =
+move g m =
     let
+        start = moveStart m
+        end = moveEnd m
         b = gameBoard g
         newB = moveBoard b start end
         piece = fromJust $ pieceAtSquare g start -- TODO Ew
@@ -435,8 +438,8 @@ move g start end =
     in
         Right g {gameActiveSide = newSide, gameFullMove = newFM, gameBoard = newB, gameEnPassant = newEP, gameHalfMove = newHM, gameCastlingState = newCS}
 
-unsafeMove :: GameState -> BoardSquare -> BoardSquare -> GameState
-unsafeMove g a b = either undefined id $ move g a b
+unsafeMove :: GameState -> Move -> GameState
+unsafeMove g m = either undefined id $ move g m
 
 moveBoard :: Board -> BoardSquare -> BoardSquare -> Board
 -- Hacky, partial

@@ -8,6 +8,8 @@ simpleRookFEN = "k7/8/8/8/8/8/8/3R4 w - - 0 1"
 simpleBishopFEN = "k7/8/8/8/8/8/8/3B4 w - - 0 1"
 checkFEN = "rnbqkbnr/8/8/1B6/8/8/8/RNBQK1NR b KQkq - 1 1"
 
+unsafeMove' g a b = unsafeMove g (Move {moveStart = boardSquare' a, moveEnd = boardSquare' b, promotionData = Nothing})
+
 main :: IO ()
 main = hspec $ do
     describe "Hess" $ do
@@ -68,13 +70,13 @@ main = hspec $ do
         it "correctly increments the halfmove counter" $ do
             let
                 g = newGame
-                g' = unsafeMove g (boardSquare' "g1") (boardSquare' "f3")
+                g' = unsafeMove' g "g1" "f3"
                 in (gameHalfMove g') `shouldBe` 1
 
         it "correctly updates en-passant" $ do
             let
                 moves = [("e2", "e4"), ("c7", "c5"), ("g1", "f3"), ("a7", "a5")]
-                move' = \g (a,b) -> unsafeMove g (boardSquare' a) (boardSquare' b)
+                move' = \g (a,b) -> unsafeMove' g a b
                 games = scanl move' newGame moves
                 eps = map gameEnPassant games :: [EnPassant]
                 eps' = map (\(EnPassant e) -> fmap toFEN e) eps :: [Maybe String]
@@ -83,7 +85,7 @@ main = hspec $ do
         it "correctly updates castling state" $ do
             let
                 game = fromJust $ fromFEN pawnlessFEN :: GameState
-                move' = \g (a,b) -> unsafeMove g (boardSquare' a) (boardSquare' b)
+                move' = \g (a,b) -> unsafeMove' g a b
                 moves = [("a1", "a2"), ("e8", "e7"), ("e1", "e2")]
                 games = scanl move' game moves
                 cs = map (toFEN . gameCastlingState) games
@@ -92,7 +94,7 @@ main = hspec $ do
         it "handles en-passant correctly" $ do
             let
                 game = fromJust $ fromFEN pawnlessFEN
-                move' = \g (a,b) -> unsafeMove g (boardSquare' a) (boardSquare' b)
+                move' = \g (a,b) -> unsafeMove' g a b
                 game' = move' game ("b2", "b4")
                 game'' = move' game' ("a4", "b3")
                 in (pieceAtSquare game'' (boardSquare' "b4")) `shouldBe` Nothing
