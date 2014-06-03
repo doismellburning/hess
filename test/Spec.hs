@@ -1,5 +1,6 @@
 import Test.Hspec
 import Hess.Core
+import Hess.Partial
 
 import Data.Maybe
 
@@ -63,4 +64,4 @@ main = hspec $ do
         it "decodes board FEN with the correct rank/file orderings" $ do
             let
                 g = fromJust $ fromFEN simpleRookFEN :: GameState
-                in pieceAtSquare g (boardSquare' "d1") `shouldBe` fromFEN "R"
+                in pieceAtSquare g (pBoardSquare "d1") `shouldBe` fromFEN "R"

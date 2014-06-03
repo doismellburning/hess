@@ -93,9 +93,6 @@ instance FENable BoardSquare where
         | otherwise = Nothing
     fromFEN _ = Nothing
 
-boardSquare' :: String -> BoardSquare -- Unsafe utility function
-boardSquare' = fromJust . fromFEN
-
 instance FENable EnPassant where
     toFEN (EnPassant s) = maybe "-" toFEN s
     fromFEN "-" = Just $ EnPassant Nothing
@@ -249,7 +246,7 @@ boardFromFEN s =
         rows = split "/" s
         rows' = map rowFromFEN rows :: [Maybe [Maybe Piece]]
         joined = fmap concat $ fmap (map reverse) $ fmap transpose $ sequence rows' :: Maybe [Maybe Piece]
-    in fmap (Board . listArray ((boardSquare' "a1"), (boardSquare' "h8"))) joined
+    in fmap (Board . listArray ((fromJust $ fromFEN "a1"), (fromJust $ fromFEN "h8"))) joined
 
 isPromotionMove :: GameState -> Move -> Bool
 isPromotionMove gameState move =
@@ -276,11 +273,6 @@ pieceAtSquare' (Board b) square = b ! square
 
 moveStart (Move s _) = s
 moveEnd (Move _ e) = e
-
-startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-
-newGame :: GameState
-newGame = fromJust $ fromFEN startingFEN
 
 stalemate :: GameState -> Bool
 -- ^Are we in stalemate, i.e. not in check but unable to move
