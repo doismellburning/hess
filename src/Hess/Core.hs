@@ -7,6 +7,9 @@ import Data.List
 import Data.Maybe
 import Data.String.Utils
 
+-- $setup
+-- >>> import Hess.Partial
+
 data GameState = GameState {
     gameBoard :: Board,
     gameActiveSide :: Side,
