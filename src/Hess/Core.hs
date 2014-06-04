@@ -44,6 +44,9 @@ newtype File = File Char deriving (Eq, Ix, Ord, Show)
 fileDeltaPlus :: File -> Int -> File
 fileDeltaPlus (File f) i = File $ chr $ i + ord f
 
+fileDelta :: File -> File -> Int
+fileDelta (File f1) (File f2) = abs (ord f1 - ord f2)
+
 newtype Rank = Rank Int deriving (Eq, Ix, Ord, Show)
 
 rankDeltaPlus :: Rank -> Int -> Rank
@@ -446,8 +449,22 @@ moveBoard :: Board -> BoardSquare -> BoardSquare -> Board
 moveBoard (Board b) start end =
     let
         pieceAtStart = fromJust $ pieceAtSquare' (Board b) start
+        isCastle = pieceType pieceAtStart == King && fileDelta (file start) (file end) == 2
+        castleMoves = if' isCastle (castleMove (Board b) (rookMove end)) []
+        moves = [(end, Just pieceAtStart), (start, Nothing)]
     in
-        Board $ b // [(end, Just pieceAtStart), (start, Nothing)]
+        Board $ b // (moves ++ castleMoves)
+
+rookMove :: BoardSquare -> (BoardSquare, BoardSquare)
+rookMove kingTo
+    | kingTo == boardSquare' "c1" = (boardSquare' "a1", boardSquare' "d1")
+    | kingTo == boardSquare' "g1" = (boardSquare' "h1", boardSquare' "f1")
+    | kingTo == boardSquare' "c8" = (boardSquare' "a8", boardSquare' "d8")
+    | kingTo == boardSquare' "g8" = (boardSquare' "h8", boardSquare' "f8")
+    | otherwise = undefined
+
+castleMove :: Board -> (BoardSquare, BoardSquare) -> [(BoardSquare, Maybe Piece)]
+castleMove b (rookFrom, rookTo) = [(rookFrom, Nothing), (rookTo, pieceAtSquare' b rookFrom)]
 
 activePieces :: GameState -> [(BoardSquare, Piece)]
 -- ^Returns a list of the active side's pieces, as (BoardSquare, Piece)
