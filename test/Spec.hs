@@ -91,6 +91,13 @@ main = hspec $ do
                 cs = map (toFEN . gameCastlingState) games
                 in cs `shouldBe` ["KQkq", "Kkq", "K", "-"]
 
+        it "determines the en-passant square correctly" $ do
+            let
+                start = boardSquare' "a3"
+                end = boardSquare' "b4"
+                epsq = epMove start end
+                in epsq `shouldBe` boardSquare' "b3"
+
         it "handles en-passant correctly" $ do
             let
                 game = fromJust $ fromFEN pawnlessFEN

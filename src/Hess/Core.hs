@@ -32,12 +32,11 @@ data BoardSquare = BoardSquare {
 
 type BSDelta = (Int, Int)
 
-bsDeltaPlus :: Board -> BoardSquare -> BSDelta -> Maybe BoardSquare
-bsDeltaPlus b (BoardSquare f r) (fd, rd) =
-    let
-        new = BoardSquare (f `fileDeltaPlus` fd) (r `rankDeltaPlus` rd)
-    in
-        if' (onBoard b new) (Just new) Nothing
+bsDeltaPlus :: BoardSquare -> BSDelta -> BoardSquare
+bsDeltaPlus (BoardSquare f r) (fd, rd) = BoardSquare (f `fileDeltaPlus` fd) (r `rankDeltaPlus` rd)
+
+bsDelta :: BoardSquare -> BoardSquare -> BSDelta
+bsDelta (BoardSquare f1 r1) (BoardSquare f2 r2) = (fileDelta f1 f2, rankDelta r1 r2)
 
 newtype File = File Char deriving (Eq, Ix, Ord, Show)
 
@@ -51,6 +50,9 @@ newtype Rank = Rank Int deriving (Eq, Ix, Ord, Show)
 
 rankDeltaPlus :: Rank -> Int -> Rank
 rankDeltaPlus (Rank r) i = Rank $ r + i
+
+rankDelta :: Rank -> Rank -> Int
+rankDelta (Rank r1) (Rank r2) = r1 - r2
 
 data Piece = Piece {
     pieceType :: PieceType,
@@ -363,18 +365,18 @@ safeBang a i
 -- Could use a refactor
 generateEnds :: Board -> BoardSquare -> BSDelta -> Maybe Int -> Bool -> [BoardSquare]
 generateEnds _ _ _ (Just 0) _ = []
-generateEnds board start bsDelta limit canTake = generateEnds' board start start bsDelta limit canTake
-generateEnds' board realStart start bsDelta limit canTake =
+generateEnds board start delta limit canTake = generateEnds' board start start delta limit canTake
+generateEnds' board realStart start delta limit canTake =
     let
-        end = bsDeltaPlus board start bsDelta
-    in case end of
-        Nothing -> []
-        Just bs ->
+        end = bsDeltaPlus start delta
+    in case (onBoard board end) of
+        False -> []
+        True ->
             let
-                endPiece = pieceAtSquare' board bs
+                endPiece = pieceAtSquare' board end
             in case endPiece of
-                Nothing -> [bs] ++ generateEnds' board realStart bs bsDelta (fmap (\x -> x - 1) limit) canTake
-                Just piece -> if' (canTake && (pieceSide $ fromJust $ pieceAtSquare' board realStart) /= (pieceSide piece)) [bs] []
+                Nothing -> [end] ++ generateEnds' board realStart end delta (fmap (\x -> x - 1) limit) canTake
+                Just piece -> if' (canTake && (pieceSide $ fromJust $ pieceAtSquare' board realStart) /= (pieceSide piece)) [end] []
 
 
 -- TODO Need to refactor these types
@@ -418,7 +420,8 @@ move g m =
         start = moveStart m
         end = moveEnd m
         b = gameBoard g
-        newB = moveBoard b start end
+        isEP = (\(EnPassant eps) -> maybe False (end ==) eps) $ gameEnPassant g
+        newB = moveBoard b isEP start end
         piece = fromJust $ pieceAtSquare g start -- TODO Ew
         pt = pieceType piece
         s = gameActiveSide g
@@ -434,7 +437,7 @@ move g m =
         -- End of Castling
         newEP = EnPassant $
             case (pieceType piece) of
-                Pawn -> Just $ if' (pieceSide piece == Black) (fromJust $ bsDeltaPlus b start (0, -1)) (fromJust $ bsDeltaPlus b start (0, 1)) -- TODO EW
+                Pawn -> Just $ if' (pieceSide piece == Black) (bsDeltaPlus start (0, -1)) (bsDeltaPlus start (0, 1)) -- TODO EW
                 _ -> Nothing
         isCapture = isJust $ pieceAtSquare g end :: Bool
         newHM = if' (isCapture || (pieceType piece == Pawn)) 0 (1 + gameHalfMove g)
@@ -444,16 +447,24 @@ move g m =
 unsafeMove :: GameState -> Move -> GameState
 unsafeMove g m = either undefined id $ move g m
 
-moveBoard :: Board -> BoardSquare -> BoardSquare -> Board
+moveBoard :: Board -> Bool -> BoardSquare -> BoardSquare -> Board
 -- Hacky, partial
-moveBoard (Board b) start end =
+moveBoard (Board b) isEP start end =
     let
         pieceAtStart = fromJust $ pieceAtSquare' (Board b) start
         isCastle = pieceType pieceAtStart == King && fileDelta (file start) (file end) == 2
         castleMoves = if' isCastle (castleMove (Board b) (rookMove end)) []
+        epMoves = if' isEP [(epMove start end, Nothing)] []
         moves = [(end, Just pieceAtStart), (start, Nothing)]
     in
-        Board $ b // (moves ++ castleMoves)
+        Board $ b // (moves ++ castleMoves ++ epMoves)
+
+epMove :: BoardSquare -> BoardSquare -> BoardSquare
+epMove start end = -- TODO Fix this name, it's more like "epsquare"
+    let
+        (delta, _) = bsDelta start end
+    in
+        bsDeltaPlus start (delta, 0) -- Argh
 
 rookMove :: BoardSquare -> (BoardSquare, BoardSquare)
 rookMove kingTo
